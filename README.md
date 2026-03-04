@@ -1,11 +1,18 @@
 # openclaw-trader
 
-TradingView plugin starter for a trend-following strategy using:
-- moving-average crossover entries,
+Installable TradingView + OpenPlot package for:
+- MA crossover entries,
 - RSI filters,
-- ATR-based stop-loss and take-profit exits.
+- ATR-based stop-loss/take-profit,
+- webhook forwarding from TradingView alerts to OpenPlot.
 
-## Included plugin
+## Quick start
+- macOS/Linux: `./installer/install_mac_linux.sh`
+- Windows: `./installer/install_windows.ps1`
+
+## Included components
 - `plugin/ma_rsi_atr_plugin.pine`
+- `openplot_agent/bridge.py`
+- `installer/install_tradingview_script.py`
 
-See `plugin/README.md` for setup and usage.
+See `plugin/README.md` for complete setup details.
