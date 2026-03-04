@@ -1,0 +1,9 @@
+{
+  "host": "127.0.0.1",
+  "port": 8787,
+  "webhook_path": "/tradingview",
+  "shared_secret": "CHANGE_ME_TRADINGVIEW_SHARED_SECRET",
+  "openplot_ingest_url": "https://api.openplot.example/v1/signals",
+  "openplot_api_token": "CHANGE_ME_OPENPLOT_API_TOKEN",
+  "forward_timeout_seconds": 8
+}

@@ -1,0 +1,76 @@
+//@version=5
+strategy(
+    "OpenClaw MA Crossover + RSI Filter + ATR Risk",
+    overlay=true,
+    initial_capital=100000,
+    default_qty_type=strategy.percent_of_equity,
+    default_qty_value=10,
+    commission_type=strategy.commission.percent,
+    commission_value=0.01,
+    pyramiding=0
+)
+
+// -------------------------
+// Inputs
+// -------------------------
+shortLen      = input.int(50,  "Short MA Length", minval=1)
+longLen       = input.int(200, "Long MA Length", minval=2)
+rsiLen        = input.int(14,  "RSI Length", minval=1)
+rsiOverbought = input.int(70,  "RSI Overbought", minval=50, maxval=100)
+rsiOversold   = input.int(30,  "RSI Oversold", minval=0, maxval=50)
+atrLen        = input.int(14,  "ATR Length", minval=1)
+atrStopX      = input.float(1.5, "ATR Stop (X)", step=0.1, minval=0.1)
+atrTargetX    = input.float(3.0, "ATR Target (X)", step=0.1, minval=0.1)
+
+// Agent webhook token used in alert messages.
+agentToken    = input.string("CHANGE_ME_TRADINGVIEW_SHARED_SECRET", "OpenPlot Agent Token")
+
+// Optional controls for cleaner backtests.
+useDateFilter = input.bool(false, "Use Backtest Date Filter")
+startDate     = input.time(timestamp("2020-01-01T00:00:00"), "Backtest Start")
+endDate       = input.time(timestamp("2099-12-31T00:00:00"), "Backtest End")
+
+inDateRange = not useDateFilter or (time >= startDate and time <= endDate)
+
+// -------------------------
+// Indicators
+// -------------------------
+maShort = ta.sma(close, shortLen)
+maLong  = ta.sma(close, longLen)
+rsiVal  = ta.rsi(close, rsiLen)
+atrVal  = ta.atr(atrLen)
+
+plot(maShort, color=color.orange, title="Short MA")
+plot(maLong, color=color.blue, title="Long MA")
+
+// -------------------------
+// Entry logic
+// -------------------------
+longCond  = inDateRange and ta.crossover(maShort, maLong) and (rsiVal < rsiOverbought)
+shortCond = inDateRange and ta.crossunder(maShort, maLong) and (rsiVal > rsiOversold)
+
+if longCond
+    strategy.entry("Long", strategy.long)
+
+if shortCond
+    strategy.entry("Short", strategy.short)
+
+// -------------------------
+// ATR-based exits
+// -------------------------
+longStop  = strategy.position_avg_price - atrStopX * atrVal
+longTake  = strategy.position_avg_price + atrTargetX * atrVal
+shortStop = strategy.position_avg_price + atrStopX * atrVal
+shortTake = strategy.position_avg_price - atrTargetX * atrVal
+
+strategy.exit("Long Exit", "Long", stop=longStop, limit=longTake)
+strategy.exit("Short Exit", "Short", stop=shortStop, limit=shortTake)
+
+// -------------------------
+// Alerts (usable for webhook automation)
+// -------------------------
+longMsg = '{"token":"' + agentToken + '","signal":"LONG","ticker":"{{ticker}}","close":{{close}},"time":"{{time}}"}'
+shortMsg = '{"token":"' + agentToken + '","signal":"SHORT","ticker":"{{ticker}}","close":{{close}},"time":"{{time}}"}'
+
+alertcondition(longCond, title="OpenClaw Long Signal", message=longMsg)
+alertcondition(shortCond, title="OpenClaw Short Signal", message=shortMsg)
